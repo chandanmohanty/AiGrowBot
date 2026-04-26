@@ -34,6 +34,49 @@ chown -R www-data:www-data storage bootstrap/cache
 - All traffic is redirected to `/install` until setup completes, so nothing is exposed.
 - After install, `APP_ENV=production`, `APP_DEBUG=false`, `SESSION_DRIVER=file`, `CACHE_STORE=file`.
 
+---
+
+## 0a. Subsequent deploys — `deploy.sh` (one command)
+
+Once the site is live and `git pull`-able on the server, every future release is a single command:
+
+```bash
+# As root or as the site user, from anywhere:
+cd /home/aigrowbot_admin/htdocs/aigrowbot.com
+bash deploy.sh
+```
+
+What it does (idempotent, safe to re-run):
+
+1. Re-execs as the site user if launched as root.
+2. Sanity check (composer.json, artisan, php, composer present).
+3. `git pull --ff-only` from the current branch.
+4. `composer install --no-dev --optimize-autoloader --prefer-dist`.
+5. Bootstraps `.env` from `.env.example` + `php artisan key:generate` if missing.
+6. Ensures `storage/` and `bootstrap/cache/` are writable.
+7. `php artisan migrate --force`.
+8. Creates the `public/storage` symlink if absent.
+9. Clears + rebuilds `config`, `route`, `view`, `event` caches for production.
+10. Reloads PHP-FPM (best-effort, only if `sudo -n` is allowed).
+
+**Optional flags:**
+
+| Flag | Effect |
+|------|--------|
+| `--no-pull`      | Skip `git pull` (use working tree as-is) |
+| `--skip-migrate` | Skip migrations (e.g. CSS-only release) |
+| `--build`        | Run `npm ci && npm run build` for front-end assets |
+| `--fresh`        | `php artisan optimize:clear` before rebuilding caches |
+| `--maintenance`  | Wrap deploy in `php artisan down/up` |
+
+**One-shot from your local machine:**
+
+```bash
+make deploy SSH_HOST=root@72.61.232.244
+```
+
+(Requires GNU Make. The Makefile target SSHs in and runs `bash deploy.sh` for you.)
+
 ## 1. Prerequisites (manual CLI path — legacy)
 - XAMPP with Apache + MySQL running
 - PHP 8.2+ (bundled with XAMPP or separate)
