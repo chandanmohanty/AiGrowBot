@@ -15,7 +15,7 @@ class SettingsSeeder extends Seeder
             'contact_email'      => 'support@aigrowbot.com',
             'contact_phone'      => '+91 80760 96255',
             'whatsapp_number'    => '919870217934',
-            'google_analytics'   => '',
+            'google_analytics'   => 'G-02PSSJ4R83',
             'facebook_pixel'     => '',
             'google_verify'      => '',
             'social_twitter'     => 'https://x.com/DawkiInfotech',
